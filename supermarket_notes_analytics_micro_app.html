@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full select-none">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SuperList RD - App de Compras</title>
+
+    <!-- PWA & Mobile Web App Meta Tags -->
+    <meta name="theme-color" content="#059669">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SuperList RD">
+    <meta name="application-name" content="SuperList RD">
+    <meta name="description" content="Lista de supermercado y control de gastos en RD$ optimizado para teléfonos inteligentes.">
+
+    <!-- App Favicons / Icons (Data URI SVG) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='128' fill='%23059669'/><path d='M160 160h192l-24 160H184L160 160z' fill='none' stroke='white' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'/><circle cx='208' cy='384' r='24' fill='white'/><circle cx='304' cy='384' r='24' fill='white'/><path d='M230 220l30 30 50-50' fill='none' stroke='%2334d399' stroke-width='28' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='128' fill='%23059669'/><path d='M160 160h192l-24 160H184L160 160z' fill='none' stroke='white' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'/><circle cx='208' cy='384' r='24' fill='white'/><circle cx='304' cy='384' r='24' fill='white'/></svg>">
+
+    <!-- Dynamic Web App Manifest Injection -->
+    <script>
+        const pwaManifest = {
+            "name": "SuperList RD - Compras",
+            "short_name": "SuperList RD",
+            "start_url": ".",
+            "display": "standalone",
+            "background_color": "#0f172a",
+            "theme_color": "#059669",
+            "orientation": "portrait",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='128' fill='%23059669'/><path d='M160 160h192l-24 160H184L160 160z' fill='none' stroke='white' stroke-width='32' stroke-linecap='round' stroke-linejoin='round'/><circle cx='208' cy='384' r='24' fill='white'/><circle cx='304' cy='384' r='24' fill='white'/></svg>",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(pwaManifest)], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        const linkElem = document.createElement('link');
+        linkElem.rel = 'manifest';
+        linkElem.href = manifestURL;
+        document.head.appendChild(linkElem);
+    </script>
+
+    <!-- Tailwind CSS & CDN Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            box-sizing: border-box;
+        }
+        input, textarea, select {
+            user-select: auto;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            overflow-x: hidden;
+        }
+        .safe-area-top {
+            padding-top: max(0.75rem, env(safe-area-inset-top));
+        }
+        .safe-area-bottom {
+            padding-bottom: max(1rem, env(safe-area-inset-bottom));
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 3px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 9999px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body class="h-full flex flex-col bg-slate-900 text-slate-100 antialiased">
+
+    <!-- Native Mobile App Header Bar -->
+    <header class="sticky top-0 z-30 bg-slate-800/95 backdrop-blur-lg border-b border-slate-700/80 safe-area-top shadow-md">
+        <div class="px-4 h-14 flex items-center justify-between max-w-md mx-auto">
+            <div class="flex items-center space-x-3">
+                <div class="w-9 h-9 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-600/30">
+                    <i class="fa-solid fa-cart-shopping text-base"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-black leading-none text-white tracking-tight flex items-center gap-1.5">
+                        SuperList <span class="bg-emerald-500/20 text-emerald-400 text-[10px] font-extrabold px-1.5 py-0.5 rounded-full border border-emerald-500/30">RD$</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-400 font-medium">República Dominicana</p>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-1.5">
+                <button id="installPwaHeaderBtn" class="hidden bg-emerald-600 text-white px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 active:scale-95 transition">
+                    <i class="fa-solid fa-download text-xs"></i>
+                    <span>Instalar</span>
+                </button>
+                <button id="themeToggleBtn" class="w-9 h-9 rounded-xl bg-slate-700/80 hover:bg-slate-700 text-amber-400 flex items-center justify-center active:scale-90 transition">
+                    <i id="themeIcon" class="fa-solid fa-sun text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Mobile Application View Container -->
+    <main class="flex-1 overflow-y-auto custom-scroll px-3 py-3 max-w-md mx-auto w-full pb-28">
+
+        <!-- TAB 1: MI LISTA DE COMPRAS -->
+        <section id="tab-lista" class="tab-content active space-y-3.5">
+            
+            <!-- Quick Finance Summary Strip -->
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-slate-800/90 p-3 rounded-2xl border border-slate-700/70 shadow-sm">
+                    <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-0.5">Total Estimado</span>
+                    <div id="summaryTotal" class="text-lg font-black text-white truncate">RD$0.00</div>
+                    <span id="summaryPending" class="text-[10px] text-slate-400 block truncate">Pendiente: RD$0.00</span>
+                </div>
+                <div class="bg-slate-800/90 p-3 rounded-2xl border border-slate-700/70 shadow-sm flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Avance</span>
+                        <span id="summaryProgressPercent" class="text-[10px] font-black text-emerald-400">0%</span>
+                    </div>
+                    <div id="summaryItemsCount" class="text-base font-bold text-slate-200 truncate">0 / 0 comprados</div>
+                    <div class="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden mt-1">
+                        <div id="summaryProgressBar" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Dropdown & Search Strip -->
+            <div class="flex items-center justify-between gap-2 bg-slate-800/60 p-2 rounded-2xl border border-slate-700/50">
+                <div class="flex items-center space-x-2 pl-2 text-slate-400 flex-1">
+                    <i class="fa-solid fa-filter text-xs"></i>
+                    <span class="text-xs font-bold text-slate-300">Filtrar:</span>
+                </div>
+                <select id="filterCategorySelect" class="bg-slate-900 text-slate-200 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <option value="ALL">Todas las Categorías</option>
+                    <option value="Frutas y Verduras">🥑 Frutas y Verduras</option>
+                    <option value="Carnes y Pescados">🥩 Carnes y Pescados</option>
+                    <option value="Lácteos y Huevos">🥛 Lácteos y Huevos</option>
+                    <option value="Granos y Despensa">🌾 Granos y Despensa</option>
+                    <option value="Bebidas">🥤 Bebidas</option>
+                    <option value="Limpieza y Hogar">🧹 Limpieza y Hogar</option>
+                    <option value="Panadería">🍞 Panadería</option>
+                    <option value="Cuidado Personal">🧴 Cuidado Personal</option>
+                    <option value="Otros">📦 Otros</option>
+                </select>
+            </div>
+
+            <!-- Dynamic Product List Container -->
+            <div id="productListContainer" class="space-y-2.5">
+                <!-- Items populated by JS -->
+            </div>
+
+            <!-- Empty State Display -->
+            <div id="emptyListState" class="hidden py-12 text-center space-y-2">
+                <div class="w-16 h-16 mx-auto rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400">
+                    <i class="fa-solid fa-basket-shopping text-2xl"></i>
+                </div>
+                <h3 class="text-sm font-bold text-slate-200">No hay productos en la lista</h3>
+                <p class="text-xs text-slate-400 max-w-xs mx-auto">Toca el botón <span class="text-emerald-400 font-bold">+</span> para agregar productos rápidamente.</p>
+            </div>
+        </section>
+
+        <!-- TAB 2: AGREGAR PRODUCTO (Formulario Móvil) -->
+        <section id="tab-agregar" class="tab-content space-y-4">
+            <div class="bg-slate-800 p-4 rounded-3xl border border-slate-700/80 shadow-lg">
+                <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-700/60">
+                    <h2 class="text-sm font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-square-plus text-emerald-400 text-base"></i>
+                        <span id="formHeaderTitle">Agregar a la Lista</span>
+                    </h2>
+                    <span class="text-[10px] bg-emerald-950/90 text-emerald-400 font-bold px-2 py-0.5 rounded-full border border-emerald-800">
+                        <i class="fa-solid fa-bolt"></i> Auto-Categoría
+                    </span>
+                </div>
+
+                <form id="mobileProductForm" class="space-y-3.5">
+                    <!-- Product Name Input & Real-time Auto-Category Badge -->
+                    <div class="relative">
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Nombre del producto</label>
+                        <input type="text" id="inputName" required placeholder="Ej. Plátano, Salami, Cloro, Huevo, Milk..." autocomplete="off"
+                            class="w-full h-12 px-3.5 rounded-2xl border border-slate-600 bg-slate-900 text-white text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        
+                        <div id="autoCategoryTag" class="hidden absolute right-2.5 bottom-2 px-2.5 py-1 rounded-xl text-[10px] font-extrabold flex items-center gap-1.5 shadow-md transition-all">
+                            <span id="tagIcon"></span>
+                            <span id="tagText"></span>
+                        </div>
+                    </div>
+
+                    <!-- Price & Quantity Inputs -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1">Precio Un. (RD$)</label>
+                            <input type="number" id="inputPrice" step="0.01" min="0" inputmode="decimal" required placeholder="0.00"
+                                class="w-full h-12 px-3.5 rounded-2xl border border-slate-600 bg-slate-900 text-white text-sm font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1">Cantidad</label>
+                            <div class="flex items-center h-12 rounded-2xl border border-slate-600 bg-slate-900 overflow-hidden">
+                                <button type="button" id="btnQtyMinus" class="w-12 h-full bg-slate-800 active:bg-slate-700 text-slate-200 font-black text-lg flex items-center justify-center">-</button>
+                                <input type="number" id="inputQty" value="1" min="1" inputmode="numeric" required 
+                                    class="w-full h-full text-center bg-transparent text-white text-sm font-bold focus:outline-none">
+                                <button type="button" id="btnQtyPlus" class="w-12 h-full bg-slate-800 active:bg-slate-700 text-slate-200 font-black text-lg flex items-center justify-center">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Explicit Category Override Dropdown -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-300 mb-1">Categoría asignada</label>
+                        <select id="inputCategory" class="w-full h-11 px-3.5 rounded-2xl border border-slate-600 bg-slate-900 text-slate-200 text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="Frutas y Verduras">🥑 Frutas y Verduras</option>
+                            <option value="Carnes y Pescados">🥩 Carnes y Pescados</option>
+                            <option value="Lácteos y Huevos">🥛 Lácteos y Huevos</option>
+                            <option value="Granos y Despensa">🌾 Granos y Despensa</option>
+                            <option value="Bebidas">🥤 Bebidas</option>
+                            <option value="Limpieza y Hogar">🧹 Limpieza y Hogar</option>
+                            <option value="Panadería">🍞 Panadería</option>
+                            <option value="Cuidado Personal">🧴 Cuidado Personal</option>
+                            <option value="Otros">📦 Otros</option>
+                        </select>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" id="btnSubmitForm" class="w-full h-13 bg-emerald-600 active:bg-emerald-700 text-white font-extrabold rounded-2xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2 text-sm mt-2">
+                        <i class="fa-solid fa-plus text-base"></i>
+                        <span id="btnSubmitText">Guardar en la Lista</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- TAB 3: DASHBOARD DE GASTOS Y ANALÍTICAS -->
+        <section id="tab-dashboard" class="tab-content space-y-3.5">
+            <!-- KPI Cards Strip -->
+            <div class="grid grid-cols-2 gap-2">
+                <div class="bg-slate-800 p-3.5 rounded-2xl border border-slate-700/80 shadow-sm">
+                    <div class="flex items-center justify-between text-slate-400 mb-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Mayor Gasto</span>
+                        <i class="fa-solid fa-crown text-amber-400 text-xs"></i>
+                    </div>
+                    <div id="kpiTopCategoryName" class="text-sm font-bold text-white truncate">Ninguna</div>
+                    <div id="kpiTopCategoryAmount" class="text-xs font-bold text-indigo-400 mt-0.5">RD$0.00</div>
+                </div>
+
+                <div class="bg-slate-800 p-3.5 rounded-2xl border border-slate-700/80 shadow-sm">
+                    <div class="flex items-center justify-between text-slate-400 mb-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider">Monto Comprado</span>
+                        <i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i>
+                    </div>
+                    <div id="kpiCompletedAmount" class="text-sm font-bold text-emerald-400 truncate">RD$0.00</div>
+                    <div id="kpiTotalCategoriesCount" class="text-[10px] text-slate-400 mt-0.5">0 categorías activas</div>
+                </div>
+            </div>
+
+            <!-- Doughnut Expense Chart -->
+            <div class="bg-slate-800 p-4 rounded-3xl border border-slate-700/80 shadow-md flex flex-col items-center">
+                <h3 class="text-xs font-black text-slate-300 uppercase tracking-wider mb-2 w-full text-left flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-teal-400"></i>
+                    Distribución de Presupuesto
+                </h3>
+
+                <div class="relative w-52 h-52 my-2 flex items-center justify-center">
+                    <canvas id="mobileExpenseChart"></canvas>
+                </div>
+
+                <!-- Custom Legend Container -->
+                <div id="chartLegendList" class="w-full mt-3 space-y-1.5 border-t border-slate-700/60 pt-3">
+                    <!-- Dynamic legend -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: AJUSTES Y HERRAMIENTAS -->
+        <section id="tab-ajustes" class="tab-content space-y-3.5">
+            <div class="bg-slate-800 p-4 rounded-3xl border border-slate-700/80 shadow-md space-y-3">
+                <h3 class="text-xs font-black text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-2">
+                    <i class="fa-solid fa-sliders text-indigo-400"></i>
+                    Opciones de la App
+                </h3>
+
+                <!-- Action Items -->
+                <button id="pwaInstallActionBtn" class="w-full p-3.5 bg-slate-900 hover:bg-slate-750 active:bg-slate-900 rounded-2xl border border-slate-700 text-left flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-600/20 text-emerald-400 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-mobile-screen-button"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-white">Instalar en la pantalla de inicio</div>
+                            <div class="text-[10px] text-slate-400">Usar como App nativa en tu smartphone</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+                </button>
+
+                <button id="exportDataBtn" class="w-full p-3.5 bg-slate-900 hover:bg-slate-750 active:bg-slate-900 rounded-2xl border border-slate-700 text-left flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-copy"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-white">Copiar Resumen de Texto</div>
+                            <div class="text-[10px] text-slate-400">Copiar lista lista para enviar por WhatsApp</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-500 text-xs"></i>
+                </button>
+
+                <button id="clearDataBtn" class="w-full p-3.5 bg-red-950/30 hover:bg-red-950/50 active:bg-red-950/70 rounded-2xl border border-red-900/50 text-left flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-xl bg-red-600/20 text-red-400 flex items-center justify-center text-sm">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold text-red-300">Vaciar Toda la Lista</div>
+                            <div class="text-[10px] text-red-400/80">Borra todos los productos guardados</div>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-red-500/50 text-xs"></i>
+                </button>
+            </div>
+
+            <!-- Developer Credits Strip -->
+            <div class="text-center py-4 text-[10px] text-slate-500 space-y-1">
+                <p class="font-bold">SuperList RD v2.5 PWA</p>
+                <p>Diseñada para teléfonos inteligentes en República Dominicana</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Floating Action Button (FAB) for Instant Adding -->
+    <button id="fabAddBtn" class="fixed right-5 bottom-20 z-40 bg-gradient-to-tr from-emerald-600 to-teal-400 text-white w-14 h-14 rounded-full shadow-2xl shadow-emerald-600/50 flex items-center justify-center text-2xl active:scale-90 transition border-2 border-slate-900">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+
+    <!-- Smartphone Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-slate-800/95 backdrop-blur-xl border-t border-slate-700/80 safe-area-bottom">
+        <div class="max-w-md mx-auto grid grid-cols-4 h-16">
+            <button data-tab="lista" class="nav-tab-btn active flex flex-col items-center justify-center space-y-1 text-emerald-400 transition">
+                <i class="fa-solid fa-list-check text-base"></i>
+                <span class="text-[10px] font-bold">Mi Lista</span>
+            </button>
+
+            <button data-tab="agregar" class="nav-tab-btn flex flex-col items-center justify-center space-y-1 text-slate-400 transition">
+                <i class="fa-solid fa-circle-plus text-base"></i>
+                <span class="text-[10px] font-bold">Agregar</span>
+            </button>
+
+            <button data-tab="dashboard" class="nav-tab-btn flex flex-col items-center justify-center space-y-1 text-slate-400 transition">
+                <i class="fa-solid fa-chart-pie text-base"></i>
+                <span class="text-[10px] font-bold">Dashboard</span>
+            </button>
+
+            <button data-tab="ajustes" class="nav-tab-btn flex flex-col items-center justify-center space-y-1 text-slate-400 transition">
+                <i class="fa-solid fa-sliders text-base"></i>
+                <span class="text-[10px] font-bold">Ajustes</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // Service Worker for Offline Mobile PWA Capability
+        const swInlineCode = `
+            const CACHE_KEY = 'superlist-rd-v1';
+            self.addEventListener('install', (e) => {
+                e.waitUntil(caches.open(CACHE_KEY).then(cache => cache.addAll(['./'])));
+                self.skipWaiting();
+            });
+            self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+            self.addEventListener('fetch', (e) => {
+                e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+            });
+        `;
+        if ('serviceWorker' in navigator) {
+            try {
+                const swBlob = new Blob([swInlineCode], { type: 'text/javascript' });
+                navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+            } catch(e) {}
+        }
+
+        // Expanded Vocabulary Rules Engine focused on Dominican Republic
+        const dominicanDictionary = [
+            {
+                category: 'Frutas y Verduras',
+                keywords: ['platano', 'plátano', 'guineo', 'yuca', 'batata', 'yautia', 'yautía', 'ñame', 'auyama', 'aji', 'ají', 'ajies', 'ajíes', 'repollo', 'lechuga', 'tomate', 'cebolla', 'zanahoria', 'papa', 'aguacate', 'limon', 'limón', 'cilantro', 'verdura', 'pepino', 'brocoli', 'brócoli', 'chinola', 'piña', 'pina', 'mango', 'lechosa', 'fresa', 'uva', 'manzana', 'pera', 'melon', 'melón', 'sandia', 'sandía', 'ajo']
+            },
+            {
+                category: 'Carnes y Pescados',
+                keywords: ['salami', 'pollo', 'carne', 'res', 'cerdo', 'chuleta', 'longaniza', 'jamon', 'jamón', 'tocino', 'pescado', 'atun', 'atún', 'chillo', 'tilapia', 'mariscos', 'camaron', 'camarón', 'salchicha', 'bife', 'alitas', 'pavo']
+            },
+            {
+                category: 'Lácteos y Huevos',
+                keywords: ['huevo', 'huevos', 'leche', 'queso', 'queso hoja', 'mantequilla', 'margarina', 'yogur', 'yogurt', 'crema', 'suero', 'ricota', 'mozzarella', 'cheddar']
+            },
+            {
+                category: 'Granos y Despensa',
+                keywords: ['arroz', 'habichuela', 'habichuelas', 'lenteja', 'lentejas', 'maiz', 'maíz', 'avena', 'cereal', 'pasta', 'espagueti', 'espageti', 'coditos', 'harina', 'garbanzo', 'garbanzos', 'salsa de tomate', 'aceite', 'vinagre', 'sazon', 'sazón', 'sopita']
+            },
+            {
+                category: 'Bebidas',
+                keywords: ['agua', 'jugo', 'refresco', 'soda', 'cerveza', 'ron', 'cafe', 'café', 'te', 'té', 'energizante', 'cocacola', 'pepsi', 'sprite', 'gatorade', 'presidente', 'brugal', 'barcelo']
+            },
+            {
+                category: 'Limpieza y Hogar',
+                keywords: ['cloro', 'mistolin', 'jabon', 'jabón', 'detergente', 'desinfectante', 'fabuloso', 'suavitel', 'lavaplatos', 'servilleta', 'papel higienico', 'papel higiénico', 'fundas de basura', 'esponja', 'fregador', 'toalla de papel']
+            },
+            {
+                category: 'Panadería',
+                keywords: ['pan', 'pan de agua', 'pan sobado', 'galleta', 'galletas', 'bizcocho', 'croissant', 'donas', 'pan de molde']
+            },
+            {
+                category: 'Cuidado Personal',
+                keywords: ['shampoo', 'champu', 'acondicionador', 'desodorante', 'crema dental', 'pasta de dientes', 'jabon de baño', 'toallas sanitarias', 'razurada', 'rasuradora', 'perfume']
+            }
+        ];
+
+        const categoryThemeMap = {
+            'Frutas y Verduras': { icon: 'fa-apple-whole', color: '#10b981', badge: 'text-emerald-300 bg-emerald-950/90 border-emerald-800' },
+            'Carnes y Pescados': { icon: 'fa-drumstick-bite', color: '#ef4444', badge: 'text-red-300 bg-red-950/90 border-red-800' },
+            'Lácteos y Huevos': { icon: 'fa-cow', color: '#3b82f6', badge: 'text-blue-300 bg-blue-950/90 border-blue-800' },
+            'Granos y Despensa': { icon: 'fa-wheat-awn', color: '#f59e0b', badge: 'text-amber-300 bg-amber-950/90 border-amber-800' },
+            'Bebidas': { icon: 'fa-bottle-water', color: '#06b6d4', badge: 'text-cyan-300 bg-cyan-950/90 border-cyan-800' },
+            'Limpieza y Hogar': { icon: 'fa-broom', color: '#a855f7', badge: 'text-purple-300 bg-purple-950/90 border-purple-800' },
+            'Panadería': { icon: 'fa-cookie-bite', color: '#ec4899', badge: 'text-pink-300 bg-pink-950/90 border-pink-800' },
+            'Cuidado Personal': { icon: 'fa-pump-soap', color: '#6366f1', badge: 'text-indigo-300 bg-indigo-950/90 border-indigo-800' },
+            'Otros': { icon: 'fa-box', color: '#64748b', badge: 'text-slate-300 bg-slate-800 border-slate-700' }
+        };
+
+        function normalizeStr(text) {
+            return text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+        }
+
+        function matchCategory(productName) {
+            if (!productName) return 'Otros';
+            const cleanText = normalizeStr(productName);
+            const tokens = cleanText.split(/\s+/);
+
+            for (const rule of dominicanDictionary) {
+                for (const keyword of rule.keywords) {
+                    const cleanKeyword = normalizeStr(keyword);
+                    if (tokens.some(t => t === cleanKeyword) || cleanText.includes(cleanKeyword)) {
+                        return rule.category;
+                    }
+                }
+            }
+            return 'Otros';
+        }
+
+        // Default Local Storage State
+        let itemsList = JSON.parse(localStorage.getItem('superlist_rd_items')) || [
+            { id: '1', name: 'Plátanos Verdes', category: 'Frutas y Verduras', price: 25.00, qty: 6, completed: false },
+            { id: '2', name: 'Cartón de Huevos 30u', category: 'Lácteos y Huevos', price: 235.00, qty: 1, completed: true },
+            { id: '3', name: 'Salami Induveca 1lb', category: 'Carnes y Pescados', price: 220.00, qty: 1, completed: false },
+            { id: '4', name: 'Cloro Macier 1L', category: 'Limpieza y Hogar', price: 85.00, qty: 1, completed: false }
+        ];
+
+        let editingItemId = null;
+        let expenseChart = null;
+        let pwaInstallPrompt = null;
+
+        // Element Handles
+        const tabBtns = document.querySelectorAll('.nav-tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const fabAddBtn = document.getElementById('fabAddBtn');
+        const mobileProductForm = document.getElementById('mobileProductForm');
+        const inputName = document.getElementById('inputName');
+        const inputPrice = document.getElementById('inputPrice');
+        const inputQty = document.getElementById('inputQty');
+        const inputCategory = document.getElementById('inputCategory');
+        const autoCategoryTag = document.getElementById('autoCategoryTag');
+        const tagIcon = document.getElementById('tagIcon');
+        const tagText = document.getElementById('tagText');
+        const btnSubmitText = document.getElementById('btnSubmitText');
+        const formHeaderTitle = document.getElementById('formHeaderTitle');
+        const productListContainer = document.getElementById('productListContainer');
+        const emptyListState = document.getElementById('emptyListState');
+        const filterCategorySelect = document.getElementById('filterCategorySelect');
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeIcon = document.getElementById('themeIcon');
+        const installPwaHeaderBtn = document.getElementById('installPwaHeaderBtn');
+        const pwaInstallActionBtn = document.getElementById('pwaInstallActionBtn');
+        const exportDataBtn = document.getElementById('exportDataBtn');
+        const clearDataBtn = document.getElementById('clearDataBtn');
+
+        // App Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            renderApp();
+            setupPwaPrompts();
+        });
+
+        // Tab Navigation Router
+        function switchTab(tabId) {
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            tabBtns.forEach(btn => {
+                btn.classList.remove('text-emerald-400');
+                btn.classList.add('text-slate-400');
+                if (btn.dataset.tab === tabId) {
+                    btn.classList.remove('text-slate-400');
+                    btn.classList.add('text-emerald-400');
+                }
+            });
+
+            const activeContent = document.getElementById(`tab-${tabId}`);
+            if (activeContent) activeContent.classList.add('active');
+
+            if (tabId === 'agregar' && !editingItemId) {
+                inputName.focus();
+            }
+        }
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+        });
+
+        fabAddBtn.addEventListener('click', () => switchTab('agregar'));
+
+        // Quantity Steppers
+        document.getElementById('btnQtyMinus').addEventListener('click', () => {
+            let val = parseInt(inputQty.value) || 1;
+            if (val > 1) inputQty.value = val - 1;
+        });
+
+        document.getElementById('btnQtyPlus').addEventListener('click', () => {
+            let val = parseInt(inputQty.value) || 1;
+            inputQty.value = val + 1;
+        });
+
+        // Real-time Auto Categorization Tag Event
+        inputName.addEventListener('input', (e) => {
+            const val = e.target.value.trim();
+            if (val.length >= 2) {
+                const detected = matchCategory(val);
+                inputCategory.value = detected;
+                const meta = categoryThemeMap[detected];
+
+                tagIcon.innerHTML = `<i class="fa-solid ${meta.icon}"></i>`;
+                tagText.textContent = detected;
+                autoCategoryTag.className = `absolute right-2.5 bottom-2 px-2.5 py-1 rounded-xl text-[10px] font-extrabold border flex items-center gap-1.5 shadow-md ${meta.badge}`;
+                autoCategoryTag.classList.remove('hidden');
+            } else {
+                autoCategoryTag.classList.add('hidden');
+            }
+        });
+
+        // Local Storage Sync
+        function saveState() {
+            localStorage.setItem('superlist_rd_items', JSON.stringify(itemsList));
+        }
+
+        // Theme Toggle Logic
+        themeToggleBtn.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                themeIcon.className = 'fa-solid fa-moon text-slate-300';
+            } else {
+                document.documentElement.classList.add('dark');
+                themeIcon.className = 'fa-solid fa-sun text-amber-400';
+            }
+        });
+
+        // PWA Install Prompt Handler
+        function setupPwaPrompts() {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                pwaInstallPrompt = e;
+                installPwaHeaderBtn.classList.remove('hidden');
+            });
+
+            const triggerInstall = () => {
+                if (pwaInstallPrompt) {
+                    pwaInstallPrompt.prompt();
+                    pwaInstallPrompt.userChoice.then(() => {
+                        pwaInstallPrompt = null;
+                        installPwaHeaderBtn.classList.add('hidden');
+                    });
+                } else {
+                    alert('Para instalar en iPhone: toca Compartir y selecciona "Agregar al inicio". En Android: menú 3 puntos > "Instalar aplicación".');
+                }
+            };
+
+            installPwaHeaderBtn.addEventListener('click', triggerInstall);
+            pwaInstallActionBtn.addEventListener('click', triggerInstall);
+        }
+
+        // Form Submission
+        mobileProductForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const nameVal = inputName.value.trim();
+            const priceVal = parseFloat(inputPrice.value) || 0;
+            const qtyVal = parseInt(inputQty.value) || 1;
+            const catVal = inputCategory.value || matchCategory(nameVal);
+
+            if (!nameVal) return;
+
+            if (editingItemId) {
+                itemsList = itemsList.map(item => item.id === editingItemId ? {
+                    ...item,
+                    name: nameVal,
+                    category: catVal,
+                    price: priceVal,
+                    qty: qtyVal
+                } : item);
+                editingItemId = null;
+                btnSubmitText.textContent = 'Guardar en la Lista';
+                formHeaderTitle.textContent = 'Agregar a la Lista';
+            } else {
+                const newItem = {
+                    id: Date.now().toString(),
+                    name: nameVal,
+                    category: catVal,
+                    price: priceVal,
+                    qty: qtyVal,
+                    completed: false
+                };
+                itemsList.unshift(newItem);
+            }
+
+            mobileProductForm.reset();
+            inputQty.value = "1";
+            autoCategoryTag.classList.add('hidden');
+            saveState();
+            renderApp();
+            switchTab('lista');
+        });
+
+        // Item Actions
+        window.toggleCheckItem = function(id) {
+            itemsList = itemsList.map(item => item.id === id ? { ...item, completed: !item.completed } : item);
+            saveState();
+            renderApp();
+        };
+
+        window.editProduct = function(id) {
+            const item = itemsList.find(i => i.id === id);
+            if (!item) return;
+
+            editingItemId = id;
+            inputName.value = item.name;
+            inputPrice.value = item.price;
+            inputQty.value = item.qty;
+            inputCategory.value = item.category;
+
+            inputName.dispatchEvent(new Event('input'));
+            btnSubmitText.textContent = 'Actualizar Producto';
+            formHeaderTitle.textContent = 'Editar Producto';
+            switchTab('agregar');
+        };
+
+        window.deleteProduct = function(id) {
+            itemsList = itemsList.filter(item => item.id !== id);
+            if (editingItemId === id) {
+                editingItemId = null;
+                mobileProductForm.reset();
+                autoCategoryTag.classList.add('hidden');
+                btnSubmitText.textContent = 'Guardar en la Lista';
+                formHeaderTitle.textContent = 'Agregar a la Lista';
+            }
+            saveState();
+            renderApp();
+        };
+
+        filterCategorySelect.addEventListener('change', renderApp);
+
+        // Export Data to Text
+        exportDataBtn.addEventListener('click', () => {
+            if (itemsList.length === 0) return alert('La lista está vacía.');
+            
+            let text = "*LISTA DE SUPERMERCADO RD$*\n\n";
+            itemsList.forEach(i => {
+                const status = i.completed ? "[✓]" : "[ ]";
+                text += `${status} ${i.name} (${i.qty} un) - RD$${(i.price * i.qty).toFixed(2)}\n`;
+            });
+            const grandTotal = itemsList.reduce((acc, i) => acc + (i.price * i.qty), 0);
+            text += `\n*TOTAL ESTIMADO: RD$${grandTotal.toFixed(2)}*`;
+
+            document.execCommand('copy');
+            alert('¡Resumen copiado! Puedes pegarlo en WhatsApp.');
+        });
+
+        // Clear All Data
+        clearDataBtn.addEventListener('click', () => {
+            if (itemsList.length === 0) return;
+            if (confirm('¿Vaciar todos los productos de la lista?')) {
+                itemsList = [];
+                saveState();
+                renderApp();
+            }
+        });
+
+        // Render UI
+        function renderApp() {
+            const filter = filterCategorySelect.value;
+            const filtered = filter === 'ALL' ? itemsList : itemsList.filter(i => i.category === filter);
+
+            if (filtered.length === 0) {
+                productListContainer.innerHTML = '';
+                emptyListState.classList.remove('hidden');
+            } else {
+                emptyListState.classList.add('hidden');
+
+                const grouped = filtered.reduce((acc, item) => {
+                    if (!acc[item.category]) acc[item.category] = [];
+                    acc[item.category].push(item);
+                    return acc;
+                }, {});
+
+                let html = '';
+                for (const [category, catItems] of Object.entries(grouped)) {
+                    const meta = categoryThemeMap[category] || categoryThemeMap['Otros'];
+
+                    html += `
+                        <div class="mb-3">
+                            <div class="flex items-center gap-1.5 mb-1.5 px-1">
+                                <span class="w-2 h-2 rounded-full" style="background-color: ${meta.color}"></span>
+                                <h3 class="text-[11px] font-black text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                                    <i class="fa-solid ${meta.icon} text-slate-400"></i> ${category}
+                                </h3>
+                                <span class="text-[10px] bg-slate-800 text-slate-400 font-bold px-1.5 py-0.2 rounded-full border border-slate-700">${catItems.length}</span>
+                            </div>
+                            <div class="space-y-1.5">
+                    `;
+
+                    catItems.forEach(item => {
+                        const totalLinePrice = (item.price * item.qty).toFixed(2);
+                        html += `
+                            <div class="flex items-center justify-between p-3 rounded-2xl border transition-all ${item.completed ? 'bg-slate-900/40 border-slate-800/80 opacity-60' : 'bg-slate-800 border-slate-700/80 shadow-sm'}">
+                                <div class="flex items-center space-x-3 min-w-0 flex-1 pr-1">
+                                    <button onclick="toggleCheckItem('${item.id}')" class="w-8 h-8 rounded-xl border transition flex items-center justify-center flex-shrink-0 ${item.completed ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-600 bg-slate-900 text-slate-500'}">
+                                        ${item.completed ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
+                                    </button>
+
+                                    <div class="truncate">
+                                        <p class="text-xs font-extrabold ${item.completed ? 'line-through text-slate-500' : 'text-slate-100'} truncate">${item.name}</p>
+                                        <p class="text-[10px] text-slate-400 font-medium">RD$${item.price.toFixed(2)} × ${item.qty} un.</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs font-black ${item.completed ? 'text-slate-500' : 'text-emerald-400'}">
+                                        RD$${totalLinePrice}
+                                    </span>
+                                    <div class="flex items-center space-x-0.5">
+                                        <button onclick="editProduct('${item.id}')" class="w-7 h-7 text-slate-400 active:text-indigo-400 flex items-center justify-center">
+                                            <i class="fa-solid fa-pen text-[11px]"></i>
+                                        </button>
+                                        <button onclick="deleteProduct('${item.id}')" class="w-7 h-7 text-slate-400 active:text-red-400 flex items-center justify-center">
+                                            <i class="fa-solid fa-trash-can text-[11px]"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+                productListContainer.innerHTML = html;
+            }
+
+            updateSummaryMetrics();
+            updateChartData();
+        }
+
+        // Metrics Calculator
+        function updateSummaryMetrics() {
+            const total = itemsList.reduce((acc, i) => acc + (i.price * i.qty), 0);
+            const pending = itemsList.filter(i => !i.completed).reduce((acc, i) => acc + (i.price * i.qty), 0);
+            const completedAmount = itemsList.filter(i => i.completed).reduce((acc, i) => acc + (i.price * i.qty), 0);
+            const completedCount = itemsList.filter(i => i.completed).length;
+            const totalCount = itemsList.length;
+
+            document.getElementById('summaryTotal').textContent = `RD$${total.toFixed(2)}`;
+            document.getElementById('summaryPending').textContent = `Pendiente: RD$${pending.toFixed(2)}`;
+            document.getElementById('summaryItemsCount').textContent = `${completedCount} / ${totalCount} comprados`;
+
+            const percent = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
+            document.getElementById('summaryProgressPercent').textContent = `${percent}%`;
+            document.getElementById('summaryProgressBar').style.width = `${percent}%`;
+
+            // Top Category Calculation
+            const catTotals = {};
+            itemsList.forEach(i => {
+                catTotals[i.category] = (catTotals[i.category] || 0) + (i.price * i.qty);
+            });
+
+            let topCat = 'Ninguna';
+            let maxVal = 0;
+            for (const [cat, val] of Object.entries(catTotals)) {
+                if (val > maxVal) {
+                    maxVal = val;
+                    topCat = cat;
+                }
+            }
+
+            document.getElementById('kpiTopCategoryName').textContent = topCat;
+            document.getElementById('kpiTopCategoryAmount').textContent = `RD$${maxVal.toFixed(2)}`;
+            document.getElementById('kpiCompletedAmount').textContent = `RD$${completedAmount.toFixed(2)}`;
+            document.getElementById('kpiTotalCategoriesCount').textContent = `${Object.keys(catTotals).length} categorías activas`;
+        }
+
+        // Initialize Chart.js
+        function initChart() {
+            const ctx = document.getElementById('mobileExpenseChart').getContext('2d');
+            expenseChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 2,
+                        borderColor: '#1e293b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    cutout: '72%'
+                }
+            });
+        }
+
+        // Update Chart Data
+        function updateChartData() {
+            if (!expenseChart) return;
+
+            const catTotals = {};
+            itemsList.forEach(i => {
+                catTotals[i.category] = (catTotals[i.category] || 0) + (i.price * i.qty);
+            });
+
+            const labels = Object.keys(catTotals);
+            const data = Object.values(catTotals);
+            const colors = labels.map(c => (categoryThemeMap[c] ? categoryThemeMap[c].color : '#64748b'));
+
+            expenseChart.data.labels = labels;
+            expenseChart.data.datasets[0].data = data;
+            expenseChart.data.datasets[0].backgroundColor = colors;
+            expenseChart.update();
+
+            const legendContainer = document.getElementById('chartLegendList');
+            if (labels.length === 0) {
+                legendContainer.innerHTML = '<p class="text-center text-slate-500 py-1 text-xs">Sin gastos registrados.</p>';
+                return;
+            }
+
+            const grandTotal = data.reduce((a, b) => a + b, 0);
+            let legendHtml = '';
+
+            labels.forEach((label, idx) => {
+                const amount = data[idx];
+                const percentage = grandTotal > 0 ? Math.round((amount / grandTotal) * 100) : 0;
+                const color = colors[idx];
+
+                legendHtml += `
+                    <div class="flex items-center justify-between text-xs text-slate-300">
+                        <div class="flex items-center space-x-2 truncate">
+                            <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background-color: ${color}"></span>
+                            <span class="truncate font-medium">${label}</span>
+                        </div>
+                        <div class="flex items-center space-x-1.5 font-bold">
+                            <span>RD$${amount.toFixed(2)}</span>
+                            <span class="text-slate-500 text-[10px]">(${percentage}%)</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            legendContainer.innerHTML = legendHtml;
+        }
+    </script>
+</body>
+</html>
